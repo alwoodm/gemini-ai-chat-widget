@@ -33,7 +33,7 @@ The architecture ensures that your API keys remain secure on the server and are 
 
 1. Clone the repository:
 ```bash
-git clone [[repository-address]](https://github.com/alwoodm/interactive-web-ai-widget.git)
+git clone https://github.com/alwoodm/interactive-web-ai-widget.git
 cd interactive-web-ai-widget
 ```
 
