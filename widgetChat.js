@@ -1,16 +1,14 @@
 /**
- * Gemini Chat Widget
- * A simple chat widget that uses Google's Gemini API with a knowledge base from a text file
+ * Chat Widget
+ * A simple chat widget that connects to a backend server for AI responses
  */
 (function() {
     // Configuration
     const config = {
-        apiKey: '',
-        knowledgeBasePath: 'knowledge_base.txt',
+        backendUrl: 'http://localhost:3000', // Change this to your backend URL
         cssPath: 'widgetChat.css'
     };
     
-    let knowledgeBaseContent = '';
     let chatHistory = [];
     
     // Create and inject the HTML structure
@@ -37,14 +35,14 @@
         chatContainer.id = 'chatContainer';
         chatContainer.innerHTML = `
             <div class="chat-header">
-                <h3>Gemini Chat</h3>
+                <h3>AI Assistant</h3>
                 <svg id="closeChat" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="cursor: pointer;">
                     <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="white"/>
                 </svg>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="message bot-message">
-                    Witaj jestem specjalistą z zakresu wiedzy o Prywatnym Technikum Informatycznym. Czy masz jakieś pytania na które mógłbym ci pomóc odpowiedzieć?
+                    Hello! I'm an AI assistant. How can I help you today?
                 </div>
             </div>
             <div class="chat-input">
@@ -61,35 +59,14 @@
         document.body.appendChild(chatToggle);
         document.body.appendChild(chatContainer);
         
-        // Initialize chat history
+        // Initialize chat history with welcome message
         chatHistory = [{
             role: 'model',
-            parts: [{text: 'Hello! I\'m your Gemini AI assistant with specialized knowledge. How can I help you today?'}]
+            parts: [{text: 'Hello! I\'m an AI assistant. How can I help you today?'}]
         }];
-        
-        // Load knowledge base
-        loadKnowledgeBase();
         
         // Set up event listeners
         setupEventListeners();
-    }
-    
-    // Load knowledge base content from file
-    function loadKnowledgeBase() {
-        fetch(config.knowledgeBasePath)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load knowledge base');
-                }
-                return response.text();
-            })
-            .then(text => {
-                knowledgeBaseContent = text;
-                console.log('Knowledge base loaded successfully');
-            })
-            .catch(error => {
-                console.error('Error loading knowledge base:', error);
-            });
     }
     
     // Set up event listeners
@@ -180,7 +157,7 @@
         }, 5000);
     }
     
-    // Send message to Gemini API
+    // Send message to backend
     async function sendMessage() {
         const userInput = document.getElementById('userInput');
         const message = userInput.value.trim();
@@ -198,38 +175,14 @@
             // Limit to last 10 messages to avoid token limits
             const recentHistory = chatHistory.slice(-10);
             
-            // Create request content with knowledge base
-            let requestContents = [];
-            
-            // Add knowledge base as context if it's loaded
-            if (knowledgeBaseContent) {
-                requestContents.push(
-                    {
-                        role: 'user',
-                        parts: [{
-                            text: `I'm providing you with a knowledge base. Please use this information to answer my questions: ${knowledgeBaseContent}`
-                        }]
-                    },
-                    {
-                        role: 'model',
-                        parts: [{
-                            text: `I'll use this knowledge base to answer your questions.`
-                        }]
-                    }
-                );
-            }
-            
-            // Then add the recent conversation history
-            requestContents = [...requestContents, ...recentHistory];
-            
-            // Prepare the API request
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.apiKey}`, {
+            // Send message to backend
+            const response = await fetch(`${config.backendUrl}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    contents: requestContents
+                    contents: recentHistory
                 })
             });
             
@@ -237,7 +190,8 @@
             hideTypingIndicator();
             
             if (!response.ok) {
-                throw new Error(`API responded with status ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Server responded with status ${response.status}`);
             } 
     
             const data = await response.json();
@@ -247,13 +201,13 @@
                 // Add bot response to chat
                 addMessage(botResponse, false);
             } else {
-                throw new Error('Invalid response format from API');
+                throw new Error('Invalid response format from server');
             }
             
         } catch (error) {
             console.error('Error:', error);
             hideTypingIndicator();
-            showError('Sorry, something went wrong. Please try again.');
+            showError('Sorry, something went wrong. Please try again later.');
         }
     }
     

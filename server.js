@@ -2,137 +2,142 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
+const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(cors());
 
-// Load API keys from config file
+// Load API keys
 let apiKeys = [];
-try {
-  const keysConfig = require('./config/keys');
-  apiKeys = keysConfig.apiKeys;
-} catch (error) {
-  console.error('Error loading API keys:', error);
-}
-
-// Current API key index
 let currentKeyIndex = 0;
+let knowledgeBase = '';
 
-// Knowledge base content
-let knowledgeBaseContent = '';
-try {
-  knowledgeBaseContent = fs.readFileSync(
-    path.join(__dirname, 'knowledge_base.txt'),
-    'utf8'
-  );
-  console.log('Knowledge base loaded successfully');
-} catch (error) {
-  console.error('Error loading knowledge base:', error);
+// Load configuration
+function loadConfig() {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            apiKeys = config.apiKeys || [];
+            console.log(`Loaded ${apiKeys.length} API keys`);
+        } else {
+            console.warn('config.json not found');
+        }
+    } catch (error) {
+        console.error('Error loading config:', error);
+    }
 }
 
-// Get next available API key
+// Load knowledge base
+function loadKnowledgeBase() {
+    try {
+        const kbPath = path.join(__dirname, 'knowledge_base.txt');
+        if (fs.existsSync(kbPath)) {
+            knowledgeBase = fs.readFileSync(kbPath, 'utf8');
+            console.log('Knowledge base loaded successfully');
+        } else {
+            console.warn('knowledge_base.txt not found');
+        }
+    } catch (error) {
+        console.error('Error loading knowledge base:', error);
+    }
+}
+
+// Get next API key (with rotation)
 function getNextApiKey() {
-  if (apiKeys.length === 0) {
-    return null;
-  }
-  
-  const key = apiKeys[currentKeyIndex];
-  currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
-  return key;
+    if (apiKeys.length === 0) {
+        throw new Error('No API keys available');
+    }
+    
+    const key = apiKeys[currentKeyIndex];
+    currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+    return key;
 }
 
-// Chat API endpoint
+// Chat endpoint
 app.post('/api/chat', async (req, res) => {
-  try {
-    const { contents } = req.body;
-    
-    // Add knowledge base as context
-    let requestContents = [];
-    if (knowledgeBaseContent) {
-      requestContents.push(
-        {
-          role: 'user',
-          parts: [{
-            text: `I'm providing you with a knowledge base. Please use this information to answer my questions: ${knowledgeBaseContent}`
-          }]
-        },
-        {
-          role: 'model',
-          parts: [{
-            text: `I'll use this knowledge base to answer your questions.`
-          }]
-        }
-      );
-    }
-    
-    // Add the conversation history
-    requestContents = [...requestContents, ...contents];
-    
-    // Try each API key until one works
-    let apiResponse = null;
-    let allKeysFailed = true;
-    
-    // Try each key up to the number of keys we have
-    for (let attempt = 0; attempt < apiKeys.length; attempt++) {
-      const apiKey = getNextApiKey();
-      if (!apiKey) {
-        break;
-      }
-      
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              contents: requestContents
-            })
-          }
-        );
+    try {
+        const { contents } = req.body;
         
-        if (response.ok) {
-          apiResponse = await response.json();
-          allKeysFailed = false;
-          break;
+        if (!apiKeys.length) {
+            return res.status(500).json({ error: 'No API keys configured' });
         }
-      } catch (error) {
-        console.error(`Error with API key attempt ${attempt + 1}:`, error.message);
-      }
+        
+        // Try each API key until one works or all fail
+        let lastError = null;
+        for (let i = 0; i < apiKeys.length; i++) {
+            try {
+                const apiKey = getNextApiKey();
+                
+                // Add knowledge base to the first message if it's not already included
+                let requestContents = [...contents];
+                if (knowledgeBase && !requestContents.some(msg => 
+                    msg.role === 'user' && msg.parts[0].text.includes('knowledge base'))) {
+                    requestContents.unshift(
+                        {
+                            role: 'user',
+                            parts: [{
+                                text: `I'm providing you with a knowledge base. Please use this information to answer my questions: ${knowledgeBase}`
+                            }]
+                        },
+                        {
+                            role: 'model',
+                            parts: [{
+                                text: `I'll use this knowledge base to answer your questions.`
+                            }]
+                        }
+                    );
+                }
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: requestContents
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    // If this is a quota error, try the next key
+                    if (response.status === 429) {
+                        console.warn(`API key quota exceeded, trying next key...`);
+                        continue;
+                    }
+                    throw new Error(`API responded with status ${response.status}: ${JSON.stringify(errorData)}`);
+                }
+                
+                const data = await response.json();
+                return res.json(data);
+            } catch (error) {
+                lastError = error;
+                console.error(`Error with API key ${i+1}:`, error.message);
+            }
+        }
+        
+        // If we get here, all keys failed
+        return res.status(500).json({ 
+            error: 'All API keys failed',
+            details: lastError?.message
+        });
+        
+    } catch (error) {
+        console.error('Error in chat endpoint:', error);
+        res.status(500).json({ error: error.message });
     }
-    
-    if (allKeysFailed) {
-      return res.status(500).json({ error: 'All API keys have failed' });
-    }
-    
-    res.json(apiResponse);
-  } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
 });
 
-// Move widget files to public directory
-if (!fs.existsSync(path.join(__dirname, 'public'))) {
-  fs.mkdirSync(path.join(__dirname, 'public'));
-}
-
-// Copy CSS file to public directory if it doesn't exist
-const cssSource = path.join(__dirname, 'widgetChat.css');
-const cssDestination = path.join(__dirname, 'public', 'widgetChat.css');
-if (fs.existsSync(cssSource) && !fs.existsSync(cssDestination)) {
-  fs.copyFileSync(cssSource, cssDestination);
-}
+// Initialize the server
+loadConfig();
+loadKnowledgeBase();
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
