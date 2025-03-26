@@ -65,7 +65,6 @@ npm start
 
 6. Test the widget:
    - Open http://localhost:3000/test-api.html to test your API connection
-   - Open http://localhost:3000/test.html to see the widget in action
 
 ### Production Deployment
 
