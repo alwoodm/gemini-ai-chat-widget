@@ -194,3 +194,49 @@ chatHistory = [{
 ### Customizing the Knowledge Base Instructions
 
 1. Edit `knowledge_base.txt` to modify the instructions that guide AI responses:
+
+## Cleaning Up and Version Control
+
+If you've accidentally committed the `node_modules` directory or other unnecessary files to your repository, follow these steps to clean up:
+
+### Initial Repository Setup
+
+1. Create a `.gitignore` file (already included in this repository)
+2. Remove node_modules from git tracking:
+
+```bash
+# Remove node_modules from git tracking without deleting it locally
+git rm -r --cached node_modules
+git commit -m "Remove node_modules from version control"
+
+# Other cleanup commands
+# Remove any untracked files and directories
+git clean -fd
+
+# Remove any unused files from the repository
+npm prune
+```
+
+### Regular Maintenance
+
+Use these commands to keep your repository clean:
+
+```bash
+# Remove development dependencies when deploying to production
+npm prune --production
+
+# Clear npm cache if you're experiencing package issues
+npm cache clean --force
+```
+
+### Deployment Considerations
+
+When deploying to production, consider these best practices:
+
+- Only include production dependencies (use `npm ci` rather than `npm install`)
+- Set NODE_ENV=production to optimize performance
+- Use a proper CI/CD pipeline to build and deploy your application
+
+## Personalization and Rebranding
+
+// ...existing code...
