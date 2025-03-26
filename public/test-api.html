@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gemini API Test</h1>
+    <p>This page tests if your Gemini API keys are working correctly.</p>
+    
+    <button id="testApi">Test API Connection</button>
+    
+    <div id="result" class="result">Results will appear here...</div>
+    
+    <h2>Curl Command for Manual Testing</h2>
+    <div class="result">
+        curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY" \
+-H 'Content-Type: application/json' \
+-X POST \
+-d '{
+  "contents": [{
+    "role": "user",
+    "parts":[{"text": "Hello, how are you today?"}]
+    }]
+}'
+    </div>
+    
+    <script>
+        document.getElementById('testApi').addEventListener('click', async () => {
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = "Testing API connection...";
+            resultElement.className = "result";
+            
+            try {
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultElement.className = "result success";
+                    resultElement.textContent = "Success! API is working correctly.\n\n" + JSON.stringify(data, null, 2);
+                } else {
+                    resultElement.className = "result error";
+                    resultElement.textContent = "Error: " + data.error + "\n\n" + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultElement.className = "result error";
+                resultElement.textContent = "Error connecting to server: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

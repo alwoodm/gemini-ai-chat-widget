@@ -5,7 +5,7 @@
 (function() {
     // Configuration
     const config = {
-        backendUrl: 'http://localhost:3000', // Change this to your backend URL
+        backendUrl: 'http://localhost:3000', // Hardcoded for reliability
         cssPath: 'widgetChat.css'
     };
     
@@ -175,39 +175,75 @@
             // Limit to last 10 messages to avoid token limits
             const recentHistory = chatHistory.slice(-10);
             
-            // Send message to backend
-            const response = await fetch(`${config.backendUrl}/api/chat`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: recentHistory
-                })
-            });
+            console.log('Sending message to backend, URL:', `${config.backendUrl}/api/chat`);
+            
+            // Send to backend API - improved error handling
+            let response;
+            try {
+                response = await fetch(`${config.backendUrl}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: recentHistory
+                    }),
+                    mode: 'cors' // Explicitly set CORS mode
+                });
+            } catch (fetchError) {
+                console.error('Network error during fetch:', fetchError);
+                throw new Error(`Network error: ${fetchError.message}. Make sure the server is running at ${config.backendUrl}`);
+            }
             
             // Remove typing indicator
             hideTypingIndicator();
             
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Server responded with status ${response.status}`);
-            } 
-    
-            const data = await response.json();
+            let responseText = '';
+            try {
+                responseText = await response.text();
+                console.log('Raw server response:', responseText);
+            } catch (textError) {
+                console.error('Error reading response text:', textError);
+                throw new Error('Failed to read server response');
+            }
             
-            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                const botResponse = data.candidates[0].content.parts[0].text;
-                // Add bot response to chat
-                addMessage(botResponse, false);
-            } else {
-                throw new Error('Invalid response format from server');
+            if (!response.ok) {
+                let errorMessage = 'Server responded with an error';
+                try {
+                    if (responseText) {
+                        const errorData = JSON.parse(responseText);
+                        errorMessage = errorData.error || `Server responded with status ${response.status}`;
+                        console.error('Error details:', errorData);
+                    } else {
+                        errorMessage = `Server responded with status ${response.status}`;
+                    }
+                } catch (e) {
+                    errorMessage = `Server responded with status ${response.status}: ${responseText}`;
+                }
+                throw new Error(errorMessage);
+            } 
+
+            try {
+                const data = JSON.parse(responseText);
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const botResponse = data.candidates[0].content.parts[0].text;
+                    // Add bot response to chat
+                    addMessage(botResponse, false);
+                } else {
+                    console.error('Invalid response format:', data);
+                    throw new Error('Invalid response format from API');
+                }
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError, responseText);
+                throw new Error('Failed to parse server response');
             }
             
         } catch (error) {
             console.error('Error:', error);
             hideTypingIndicator();
-            showError('Sorry, something went wrong. Please try again later.');
+            showError(`Sorry, something went wrong: ${error.message}`);
         }
     }
     
