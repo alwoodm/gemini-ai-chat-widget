@@ -1,4 +1,4 @@
-# Interactive Web AI Widget
+# Gemini AI Chat widget
 
 An interactive AI chat widget that can be easily integrated with any website. The Express.js backend ensures secure storage of API keys and provides a seamless AI chat experience for your website visitors.
 
