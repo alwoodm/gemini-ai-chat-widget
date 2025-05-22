@@ -3,12 +3,35 @@
  * A simple chat widget that connects to a backend server for AI responses
  */
 (function() {
+    // Automatyczne wykrywanie adresu backendu na podstawie lokalizacji skryptu
+    function detectBackendUrl() {
+        // 1. Próba wykrycia na podstawie atrybutu data-backend na skrypcie
+        const scripts = document.getElementsByTagName('script');
+        for (let i = 0; i < scripts.length; i++) {
+            if (scripts[i].src.includes('widgetChat.js')) {
+                if (scripts[i].hasAttribute('data-backend')) {
+                    return scripts[i].getAttribute('data-backend');
+                }
+                
+                // 2. Używamy tej samej domeny/serwera skąd pochodzi skrypt
+                const scriptUrl = new URL(scripts[i].src);
+                return `${scriptUrl.protocol}//${scriptUrl.host}`;
+            }
+        }
+        
+        // 3. Jeśli nie możemy wykryć ze skryptu, używamy aktualnej domeny
+        return window.location.origin;
+    }
+    
     // Configuration
     const config = {
-        // Use absolute URL instead of origin to avoid potential cross-origin issues
-        backendUrl: 'http://localhost:3000', // Hard-coded backend URL for reliability
+        // Automatycznie wykryj adres backendu
+        backendUrl: detectBackendUrl(),
         cssPath: 'widgetChat.css'
     };
+    
+    // Wyświetl wykryty adres w konsoli dla celów debugowania
+    console.log('Wykryty adres backendu:', config.backendUrl);
     
     let knowledgeBaseContent = '';
     let chatHistory = [];

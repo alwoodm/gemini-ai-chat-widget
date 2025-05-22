@@ -86,14 +86,30 @@ For production use, you should:
 To add the widget to your website, include the following script tag in your HTML:
 
 ```html
-<script src="http://localhost:3000/widgetChat.js" defer></script>
+<script src="http://localhost:3000/widgetChat.js" data-backend="https://localhost:3000" defer></script>
 ```
 
 For production, update the URL to point to your hosted server:
 
 ```html
-<script src="https://your-server.com/widgetChat.js" defer></script>
+<script src="https://your-server.com/widgetChat.js" data-backend="https://your-api-server.com" defer></script>
 ```
+
+### Custom Backend Configuration
+
+You can specify a custom backend URL using the `data-backend` attribute on the script tag:
+
+```html
+<script src="https://your-server.com/widgetChat.js" data-backend="https://your-api-server.com" defer></script>
+```
+
+This is useful when:
+
+- Your widget files and API backend are hosted on different servers
+- You're testing with a development backend but using production widget files
+- You need to route API requests through a specific proxy or gateway
+
+If the `data-backend` attribute is not specified, the widget will automatically use the same domain from which the script is loaded.
 
 ## Configuration Options
 
