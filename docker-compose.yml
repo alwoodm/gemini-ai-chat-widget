@@ -9,3 +9,9 @@ services:
       - ./config.json:/app/config.json
       - ./knowledge_base.txt:/app/knowledge_base.txt
     restart: unless-stopped
+    networks:
+      - gemini-network
+
+networks:
+  gemini-network:
+    driver: bridge
