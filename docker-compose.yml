@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  gemini-chat-widget:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config.json:/app/config.json
+      - ./knowledge_base.txt:/app/knowledge_base.txt
+    restart: unless-stopped

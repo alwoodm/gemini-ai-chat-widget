@@ -239,3 +239,43 @@ When deploying to production, consider these best practices:
 ## Personalization and Rebranding
 
 coming soon 
+
+## Docker Deployment
+
+To run the application in Docker, follow these steps:
+
+### Docker Setup
+
+1. Make sure you have Docker and Docker Compose installed on your system.
+
+2. Build and start the container:
+```bash
+docker-compose up -d
+```
+
+3. The application will be available at http://localhost:3000
+
+### Using Docker for Development
+
+For development with hot-reloading:
+
+1. Modify the docker-compose.yml file to mount the source code as a volume:
+```yaml
+volumes:
+  - .:/app
+  - /app/node_modules
+```
+
+2. Run the container with the development command:
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+### Docker Production Considerations
+
+For production environments:
+
+1. Ensure your API keys are properly configured in config.json before building the image
+2. Consider using Docker secrets or environment variables for sensitive information
+3. Set the NODE_ENV environment variable to 'production' in your Dockerfile
+4. Use a reverse proxy like Nginx or Traefik in front of the application for HTTPS support
