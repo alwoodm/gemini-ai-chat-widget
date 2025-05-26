@@ -87,12 +87,14 @@ To add the widget to your website, include the following script tag in your HTML
 
 ```html
 <script src="http://localhost:3000/widgetChat.js" data-backend="https://localhost:3000" defer></script>
+<link rel="stylesheet" href="http://localhost:3000/widgetChat.css">
 ```
 
 For production, update the URL to point to your hosted server:
 
 ```html
 <script src="https://your-server.com/widgetChat.js" data-backend="https://your-api-server.com" defer></script>
+<link rel="stylesheet" href="https://your-server.com/widgetChat.css">
 ```
 
 ### Custom Backend Configuration
@@ -101,6 +103,7 @@ You can specify a custom backend URL using the `data-backend` attribute on the s
 
 ```html
 <script src="https://your-server.com/widgetChat.js" data-backend="https://your-api-server.com" defer></script>
+<link rel="stylesheet" href="https://your-server.com/widgetChat.css">
 ```
 
 This is useful when:
