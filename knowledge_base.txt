@@ -4,33 +4,14 @@ Do not use markdown, respond in plain text only.
 # Company Information
 
 ## About Us
-We are a technology company specializing in AI-powered chat solutions and interactive web widgets. Our mission is to help businesses improve customer engagement through intelligent conversational interfaces.
 
 ## Products and Services
-- AI Chat Widgets: Customizable chat interfaces that can be integrated into any website
-- API Integration Services: Seamless integration with popular AI platforms like Google Gemini
-- Custom Development: Tailored chat solutions for specific business needs
-- Technical Support: Comprehensive support for implementation and maintenance
+
 
 ## Pricing
-- Basic Plan: Free for up to 100 conversations per month
-- Professional Plan: $29/month for up to 1,000 conversations
-- Enterprise Plan: $99/month for unlimited conversations with premium support
-- Custom Enterprise: Contact us for high-volume or specialized requirements
 
 ## Contact
-- Email: support@example.com
-- Phone: +1 (555) 123-4567
-- Website: https://example.com
-- Support Portal: https://support.example.com
 
 ## Working Hours
-Monday-Friday: 8:00 AM - 5:00 PM (EST)
-Saturday: 9:00 AM - 2:00 PM (EST)
-Sunday: Closed
 
 ## Frequently Asked Questions
-- How do I integrate the chat widget? Simply add our script tag to your website HTML.
-- Is my API key secure? Yes, all API keys are stored securely on our backend servers.
-- Can I customize the appearance? Absolutely! The widget is fully customizable through CSS.
-- Do you offer technical support? Yes, we provide comprehensive technical support for all plans.
