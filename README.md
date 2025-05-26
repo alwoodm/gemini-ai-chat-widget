@@ -252,10 +252,6 @@ When deploying to production, consider these best practices:
 - Set NODE_ENV=production to optimize performance
 - Use a proper CI/CD pipeline to build and deploy your application
 
-## Personalization and Rebranding
-
-coming soon 
-
 ## Docker Deployment
 
 To run the application in Docker, follow these steps:
