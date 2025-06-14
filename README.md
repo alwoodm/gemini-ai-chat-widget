@@ -1,3 +1,5 @@
+**This repository is currently undergoing migration. The current version here is outdated. The newer version is available in a private repository. If you have any questions, please contact me at alwood.ovh.**
+
 # Gemini AI Chat widget
 
 An interactive AI chat widget that can be easily integrated with any website. The Express.js backend ensures secure storage of API keys and provides a seamless AI chat experience for your website visitors.
